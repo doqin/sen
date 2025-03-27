@@ -1,9 +1,9 @@
 #pragma once
-#include <token.hpp>
+#include <AST.hpp>
 #include <lexer.hpp>
 #include <memory>
+#include <token.hpp>
 #include <vector>
-#include <AST.hpp>
 
 class Parser {
 private:
@@ -14,10 +14,15 @@ private:
   bool match(TokenType type);
   // Handle primary expression like numbers, strings, identifiers
   std::unique_ptr<Expr> parsePrimary();
+  // Handle unary expressions
+  std::unique_ptr<Expr> parseUnary();
   // Handle binary expressions
   std::unique_ptr<Expr> parseExpression();
+  // Handle function call expressions
+  std::unique_ptr<Expr> parseCall(std::unique_ptr<Expr> callee);
   // Handle statements (for now, just expressions)
   std::unique_ptr<Stmt> parseStatement();
+
 public:
   explicit Parser(Lexer lexer);
   // Parses the program from the lexer hehe

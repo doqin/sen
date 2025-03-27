@@ -131,7 +131,9 @@ Token Lexer::nextToken() {
   case '}':
     return {TokenType::CloseBrace, "}"};
   case '"':
-    return {TokenType::String, "\""};
+    return {TokenType::String, "\""}; // Not sure if this is necessary
+  case ',':
+    return { TokenType::Comma, ","};
   case '\0':
     return {TokenType::EndOfFile, ""};
   default:

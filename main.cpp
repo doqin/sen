@@ -1,4 +1,3 @@
-#include "AST.hpp"
 #include <FileReader.hpp>
 #include <exception>
 #include <iostream>
@@ -14,9 +13,9 @@ int main(int argc, char *argv[]) {
   std::string source;
   try {
     FileReader reader(argv[1]);
-    /*
-    std::cout << "File content:\n" << reader.getContent() << std::endl;
-    */
+    if (std::find(argv, argv + argc, std::string("--show_content")) != argv + argc) {
+      std::cout << "File content:\n" << reader.getContent() << std::endl;
+    }
     source = reader.getContent();
   } catch (const std::exception &e) {
     std::cerr << "Error: " << e.what() << std::endl;
@@ -25,14 +24,19 @@ int main(int argc, char *argv[]) {
 
   Lexer lexer(source);
   Parser parser(lexer);
-  /*
-  Token token;
-  while ((token = lexer.nextToken()).type != TokenType::EndOfFile) {
-    std::cout << "Token: " << token.value << std::endl;
+  if (std::find(argv, argv + argc, std::string("--show_tokens")) != argv + argc) {
+    Token token;
+    while ((token = lexer.nextToken()).type != TokenType::EndOfFile) {
+      std::cout << "Token: " << token.value << std::endl;
+    }
   }
-  */
-  auto program = parser.parseProgram();
-  std::cout << "sen::Parsing complete!" << std::endl;
+  
+  try {
+    auto program = parser.parseProgram();
+    std::cout << "sen::Parsing complete!" << std::endl;
+  } catch (std::exception& e) {
+    std::cerr << "sen::Parsing error: " << e.what() << std::endl;
+  }
 
   return 0;
 }
