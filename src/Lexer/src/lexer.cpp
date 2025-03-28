@@ -97,6 +97,7 @@ Token Lexer::nextToken() {
       }
     }
 
+    if (identifier == "biến") return { TokenType::Var, identifier};
     return {TokenType::Identifier, identifier};
   }
 
@@ -134,6 +135,8 @@ Token Lexer::nextToken() {
     return {TokenType::String, "\""}; // Not sure if this is necessary
   case ',':
     return { TokenType::Comma, ","};
+  case ';':
+    return { TokenType::Semicolon, ";"};
   case '\0':
     return {TokenType::EndOfFile, ""};
   default:

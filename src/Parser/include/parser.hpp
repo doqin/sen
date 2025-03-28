@@ -17,12 +17,16 @@ private:
   // Handle unary expressions
   std::unique_ptr<Expr> parseUnary();
   // Handle binary expressions
+  std::unique_ptr<Expr> parseBinary(int precedence, std::unique_ptr<Expr> left);
+
   std::unique_ptr<Expr> parseExpression();
   // Handle function call expressions
   std::unique_ptr<Expr> parseCall(std::unique_ptr<Expr> callee);
   // Handle statements (for now, just expressions)
   std::unique_ptr<Stmt> parseStatement();
 
+  // Get precedence hehe
+  int getPrecedence(const std::string& op);
 public:
   explicit Parser(Lexer lexer);
   // Parses the program from the lexer hehe

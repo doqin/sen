@@ -3,28 +3,32 @@
 #include <string>
 #include <vector>
 
-class Expr {
-public:
+// Base class for all expressions
+struct Expr {
   virtual ~Expr() = default;
 };
 
+// Base class for all statements
+struct Stmt {
+  virtual ~Stmt() = default;
+};
+
+// ──────────────────── EXPRESSIONS ────────────────────
+
 // Expression for literals (numbers, strings, etc.)
-class LiteralExpr : public Expr {
-public:
+struct LiteralExpr : public Expr {
   std::string value;
   explicit LiteralExpr(const std::string &value) : value(value) {}
 };
 
 // Expression for identifiers (variables, function names)
-class IdentifierExpr : public Expr {
-public:
+struct VarExpr : public Expr {
   std::string name;
-  explicit IdentifierExpr(const std::string &name) : name(name) {}
+  explicit VarExpr(const std::string &name) : name(name) {}
 };
 
 // Unary expression like -5, !true, and ~x
-class UnaryExpr : public Expr {
-public:
+struct UnaryExpr : public Expr {
   std::string op;
   std::unique_ptr<Expr> right;
 
@@ -33,8 +37,7 @@ public:
 };
 
 // Binary expression like 1 + 2
-class BinaryExpr : public Expr {
-public:
+struct BinaryExpr : public Expr {
   std::unique_ptr<Expr> left;
   std::string op;
   std::unique_ptr<Expr> right;
@@ -44,8 +47,7 @@ public:
       : left(std::move(left)), op(std::move(op)), right(std::move(right)) {}
 };
 
-class CallExpr : public Expr {
-public:
+struct CallExpr : public Expr {
   std::unique_ptr<Expr> callee;
   std::vector<std::unique_ptr<Expr>> arguments;
 
@@ -54,15 +56,27 @@ public:
       : callee(std::move(callee)), arguments(std::move(args)) {}
 };
 
-// Statement base class
-class Stmt {
-public:
-  virtual ~Stmt() = default;
-};
+// ──────────────────── STATEMENTS ────────────────────
 
-// Expression statement (for standalone expression)
-class ExprStmt : public Stmt {
-public:
+// Expression statement (e.g., `print(42);`)
+struct ExprStmt : public Stmt {
   std::unique_ptr<Expr> expression;
   explicit ExprStmt(std::unique_ptr<Expr> expr) : expression(std::move(expr)) {}
 };
+
+// Variable declaration statement (e.g., `x = 10;`)
+struct VarDeclStmt : public Stmt {
+  std::string name;
+  std::unique_ptr<Expr> initializer;
+
+  VarDeclStmt(std::string name, std::unique_ptr<Expr> initializer)
+      : name(std::move(name)), initializer(std::move(initializer)) {}
+};
+
+// Block statement (e.g., `{ x = 10; y = 20; }`)
+struct BlockStmt : public Stmt {
+  std::vector<std::unique_ptr<Stmt>> statements;
+};
+
+// Print function (for debugging AST)
+void printAST(const std::unique_ptr<Stmt>& stmt, int indent = 0);

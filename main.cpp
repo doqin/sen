@@ -1,3 +1,4 @@
+#include "token.hpp"
 #include <FileReader.hpp>
 #include <exception>
 #include <iostream>
@@ -22,15 +23,18 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  Lexer lexer(source);
-  Parser parser(lexer);
   if (std::find(argv, argv + argc, std::string("--show_tokens")) != argv + argc) {
+    Lexer temp(source);
     Token token;
-    while ((token = lexer.nextToken()).type != TokenType::EndOfFile) {
-      std::cout << "Token: " << token.value << std::endl;
+    while ((token = temp.nextToken()).type != TokenType::EndOfFile) {
+      std::cout << "Token: " << token.value << " ";
+      printTokenType(token.type);
+      std::cout << std::endl;
     }
   }
-  
+
+  Lexer lexer(source);
+  Parser parser(lexer);
   try {
     auto program = parser.parseProgram();
     std::cout << "sen::Parsing complete!" << std::endl;
