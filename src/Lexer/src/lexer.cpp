@@ -130,9 +130,39 @@ Token Lexer::nextToken() {
       pos = tempPos;
     }
 
+    // Check for multi-word keywords like "không thì"
+    if (identifier == "không") {
+      size_t tempPos = pos;
+
+      // Skip whitespace after "trong"
+      while (std::isspace(peek())) advance();
+
+      std::string nextWord;
+      if (isAlpha(std::string(1, peek()))) {
+        nextWord = extractUtf8Char(source, pos);
+
+        // Extract remaining characters for the second word
+        while (pos < source.length()) {
+          size_t temp2Pos = pos;
+          std::string nextChar = extractUtf8Char(source, temp2Pos);
+          if (isAlpha(nextChar) || (nextChar.size() == 1 && isDigit(nextChar[0]))) {
+            nextWord += nextChar;
+            pos = temp2Pos; // Update pos only if we used the character
+          } else {
+            break;
+          }
+        }
+      }
+
+      if (nextWord == "thì") {
+        return { TokenType::Else, "không thì"};
+      } 
+      
+      pos = tempPos;
+    }
+
     // Recognize other keywords
     if (identifier == "nếu")  return { TokenType::If,   identifier };
-    if (identifier == "khác") return { TokenType::Else, identifier };
     if (identifier == "cho")  return { TokenType::For,  identifier };
     if (identifier == "biến") return { TokenType::Var,  identifier };
     return {TokenType::Identifier, identifier };
