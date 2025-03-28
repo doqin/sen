@@ -10,6 +10,7 @@ enum class TokenType {
   OpenParen, CloseParen,
   OpenBrace, CloseBrace,
   Comma, Semicolon,
+  If, Else, While, For,
   EndOfFile,
   Unknown,
   Error

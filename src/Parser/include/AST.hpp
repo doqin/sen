@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 // Base class for all expressions
@@ -8,8 +9,29 @@ struct Expr {
   virtual ~Expr() = default;
 };
 
+// Declaration
+struct BlockStmt;
+struct VarDeclStmt;
+struct ExprStmt;
+struct IfStmt;
+
+/*
+// Base class for StmtVisitor
+struct StmtVisitor {
+  virtual void visitBlockStmt(const BlockStmt &stmt) = 0;
+  virtual void visitVarDeclStmt(const VarDeclStmt &stmt) = 0;
+  virtual void visitExprStmt(const ExprStmt &stmt) = 0;
+  virtual void visitIfStmt(const IfStmt &stmt) = 0;
+
+  virtual ~StmtVisitor() = default;
+};
+*/
+
 // Base class for all statements
 struct Stmt {
+  /*
+  virtual void accept(StmtVisitor &visitor) const = 0;
+  */
   virtual ~Stmt() = default;
 };
 
@@ -73,10 +95,53 @@ struct VarDeclStmt : public Stmt {
       : name(std::move(name)), initializer(std::move(initializer)) {}
 };
 
+// If statement (e.g., `nếu (a < b) {} khác`)
+struct IfStmt : public Stmt {
+  std::unique_ptr<Expr> condition;
+  std::unique_ptr<Stmt> thenBranch;
+  std::unique_ptr<Stmt> elseBranch;
+
+  IfStmt(std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> thenBranch,
+         std::unique_ptr<Stmt> elseBranch)
+      : condition(std::move(condition)), thenBranch(std::move(thenBranch)),
+        elseBranch(std::move(elseBranch)) {}
+};
+
+// While statement (e.g., `trong khi (a < b) {})
+struct WhileStmt : public Stmt {
+  std::unique_ptr<Expr> condition;
+  std::unique_ptr<Stmt> body;
+
+  WhileStmt(std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> body)
+      : condition(std::move(condition)), body(std::move(body)) {}
+};
+
+// For statement (e.g. `cho (expr; condition; incre) {}`)
+struct ForStmt : public Stmt {
+  std::unique_ptr<Stmt> initializer;
+  std::unique_ptr<Expr> condition;
+  std::unique_ptr<Expr> increment;
+  std::unique_ptr<Stmt> body;
+
+  ForStmt(std::unique_ptr<Stmt> initializer, std::unique_ptr<Expr> condition,
+          std::unique_ptr<Expr> increment, std::unique_ptr<Stmt> body)
+      : initializer(std::move(initializer)), condition(std::move(condition)),
+        increment(std::move(increment)), body(std::move(body)) {}
+};
+
 // Block statement (e.g., `{ x = 10; y = 20; }`)
 struct BlockStmt : public Stmt {
   std::vector<std::unique_ptr<Stmt>> statements;
+
+  BlockStmt(std::vector<std::unique_ptr<Stmt>> stmts)
+      : statements(std::move(stmts)) {}
+
+  /*
+  void accept(StmtVisitor &visitor) const override {
+    visitor.visitBlockStmt(*this);
+  }
+  */
 };
 
 // Print function (for debugging AST)
-void printAST(const std::unique_ptr<Stmt>& stmt, int indent = 0);
+void printAST(const std::unique_ptr<Stmt> &stmt, int indent = 0);

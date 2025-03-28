@@ -1,15 +1,10 @@
-#include "token.hpp"
-#include <iostream>
 #include <memory>
 #include <parser.hpp>
 #include <stdexcept>
 #include <string>
 
-void Parser::advance() { 
-  current = lexer.nextToken(); 
-  std::cout << "Parser::Current Token: " << current.value << " ";
-  printTokenType(current.type);
-  std::cout << std::endl;
+void Parser::advance() {
+  current = lexer.nextToken();
 }
 
 bool Parser::match(TokenType type) {
@@ -67,7 +62,6 @@ std::unique_ptr<Expr> Parser::parseBinary(int precedence,
     advance(); // Consume operator
     auto right = parseBinary(opPrecedence + 1, parseUnary());
     left = std::make_unique<BinaryExpr>(std::move(left), op, std::move(right));
-
   }
   return left;
 }
@@ -94,28 +88,112 @@ std::unique_ptr<Expr> Parser::parseCall(std::unique_ptr<Expr> callee) {
   return std::make_unique<CallExpr>(std::move(callee), std::move(arguments));
 }
 
-std::unique_ptr<Stmt> Parser::parseStatement() {
-  if (match(TokenType::Var)) {
-    if (!match(TokenType::Identifier)) {
-      throw std::runtime_error("Expected variable name after 'biến'");
-    }
-    std::string name = current.value;
-    // Remove this line - match() already advanced the token:
-    // advance(); 
+std::unique_ptr<Stmt> Parser::parseBlockStatement() {
+  std::vector<std::unique_ptr<Stmt>> statements;
 
-    std::unique_ptr<Expr> initializer = nullptr;
-    // Check if current token is an operator and specifically "="
-    if (current.type == TokenType::Operator && current.value == "=") {
-      advance(); // Now advance past the "=" operator
-      initializer = parseExpression();
-    }
-
-    if (!match(TokenType::Semicolon)) {
-      throw std::runtime_error("Expected ';' after variable declaration");
-    }
-
-    return std::make_unique<VarDeclStmt>(name, std::move(initializer));
+  while (current.type != TokenType::CloseBrace &&
+         current.type != TokenType::EndOfFile) {
+    statements.push_back(parseStatement());
   }
+
+  if (!match(TokenType::CloseBrace)) {
+    throw std::runtime_error("Expected '}' at the end of a block");
+  }
+
+  return std::make_unique<BlockStmt>(std::move(statements));
+}
+
+std::unique_ptr<Stmt> Parser::parseIfStatement() {
+  if (!match(TokenType::OpenParen)) {
+    throw std::runtime_error("Expected '(' after 'nếu'");
+  }
+
+  auto condition = parseExpression();
+
+  if (!match(TokenType::CloseParen)) {
+    throw std::runtime_error("Expected ')' after nếu condition");
+  }
+
+  auto thenBranch = parseStatement();
+  std::unique_ptr<Stmt> elseBranch = nullptr;
+
+  if (match(TokenType::Else)) {
+    elseBranch = parseStatement();
+  }
+
+  return std::make_unique<IfStmt>(std::move(condition), std::move(thenBranch),
+                                  std::move(elseBranch));
+}
+
+std::unique_ptr<Stmt> Parser::parseWhileStatement() {
+  if (!match(TokenType::OpenParen)) {
+    throw std::runtime_error("Expected '(' after 'trong khi'");
+  }
+
+  auto condition = parseExpression();
+
+  if (!match(TokenType::CloseParen)) {
+    throw std::runtime_error("Expected ')' after while condition");
+  }
+
+  auto body = parseStatement();
+
+  return std::make_unique<WhileStmt>(std::move(condition), std::move(body));
+}
+
+std::unique_ptr<Stmt> Parser::parseForStatement() {
+  if (!match(TokenType::OpenParen)) {
+    throw std::runtime_error("Expected '(' after 'cho'");
+  }
+
+  std::unique_ptr<Stmt> initializer;
+  if (!match(TokenType::Semicolon)) {
+    initializer = parseStatement();
+  }
+
+  auto condition = match(TokenType::Semicolon) ? nullptr : parseExpression();
+  if (!match(TokenType::Semicolon)) {
+    throw std::runtime_error("Expected ';' after loop condition");
+  }
+
+  std::unique_ptr<Expr> increment =
+      match(TokenType::CloseParen) ? nullptr : parseExpression();
+  if (!match(TokenType::CloseParen)) {
+    throw std::runtime_error("Expected ')' after for clause");
+  }
+
+  auto body = parseStatement();
+
+  return std::make_unique<ForStmt>(std::move(initializer), std::move(condition),
+                                   std::move(increment), std::move(body));
+}
+
+std::unique_ptr<Stmt> Parser::parseVarDeclStatement() {
+  if (!match(TokenType::Identifier)) {
+    throw std::runtime_error("Expected variable name after 'biến'");
+  }
+  std::string name = current.value;
+
+  std::unique_ptr<Expr> initializer = nullptr;
+  // Check if current token is an operator and specifically "="
+  if (current.type == TokenType::Operator && current.value == "=") {
+    advance(); // Now advance past the "=" operator
+    initializer = parseExpression();
+  }
+
+  if (!match(TokenType::Semicolon)) {
+    throw std::runtime_error("Expected ';' after variable declaration");
+  }
+
+  return std::make_unique<VarDeclStmt>(name, std::move(initializer));
+}
+
+std::unique_ptr<Stmt> Parser::parseStatement() {
+  if (match(TokenType::If)) return parseIfStatement();
+  if (match(TokenType::While)) return parseWhileStatement();
+  if (match(TokenType::For)) return parseForStatement();
+  if (match(TokenType::OpenBrace)) return parseBlockStatement();
+  if (match(TokenType::Var)) return parseVarDeclStatement();
 
   auto expr = parseExpression();
   if (!match(TokenType::Semicolon)) {

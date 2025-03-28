@@ -1,5 +1,6 @@
 #include "token.hpp"
 #include <cctype>
+#include <cstddef>
 #include <lexer.hpp>
 
 Lexer::Lexer(const std::string &source) : source(source), pos(0) {}
@@ -83,6 +84,7 @@ Token Lexer::nextToken() {
     }
   }
 
+  // Handles alphabetic characters
   if (isAlpha(firstChar)) {
     std::string identifier = firstChar;
 
@@ -97,8 +99,43 @@ Token Lexer::nextToken() {
       }
     }
 
-    if (identifier == "biến") return { TokenType::Var, identifier};
-    return {TokenType::Identifier, identifier};
+    // Check for multi-word keywords like "trong khi"
+    if (identifier == "trong") {
+      size_t tempPos = pos;
+
+      // Skip whitespace after "trong"
+      while (std::isspace(peek())) advance();
+
+      std::string nextWord;
+      if (isAlpha(std::string(1, peek()))) {
+        nextWord = extractUtf8Char(source, pos);
+
+        // Extract remaining characters for the second word
+        while (pos < source.length()) {
+          size_t temp2Pos = pos;
+          std::string nextChar = extractUtf8Char(source, temp2Pos);
+          if (isAlpha(nextChar) || (nextChar.size() == 1 && isDigit(nextChar[0]))) {
+            nextWord += nextChar;
+            pos = temp2Pos; // Update pos only if we used the character
+          } else {
+            break;
+          }
+        }
+      }
+
+      if (nextWord == "khi") {
+        return { TokenType::While, "trong khi"};
+      } 
+      
+      pos = tempPos;
+    }
+
+    // Recognize other keywords
+    if (identifier == "nếu")  return { TokenType::If,   identifier };
+    if (identifier == "khác") return { TokenType::Else, identifier };
+    if (identifier == "cho")  return { TokenType::For,  identifier };
+    if (identifier == "biến") return { TokenType::Var,  identifier };
+    return {TokenType::Identifier, identifier };
   }
 
   if (std::isdigit(firstChar[0])) {
