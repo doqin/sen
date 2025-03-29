@@ -11,6 +11,7 @@ enum class TokenType {
   OpenBrace, CloseBrace,
   Comma, Semicolon,
   If, Else, While, For,
+  Function,
   EndOfFile,
   Unknown,
   Error

@@ -11,6 +11,7 @@ private:
   Token current;
 
   void advance();
+  bool check(TokenType type) const;
   bool match(TokenType type);
   // Handle primary expression like numbers, strings, identifiers
   std::unique_ptr<Expr> parsePrimary();
@@ -32,6 +33,8 @@ private:
   std::unique_ptr<Stmt> parseForStatement();
   // Handle for variable declaration statements
   std::unique_ptr<Stmt> parseVarDeclStatement();
+  // Handle for function declaration statements
+  std::unique_ptr<Stmt> parseFunction();
   // Handle statements
   std::unique_ptr<Stmt> parseStatement();
 

@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
   std::string source;
   try {
     FileReader reader(argv[1]);
-    if (std::find(argv, argv + argc, std::string("--show_content")) != argv + argc) {
+    if (std::find(argv, argv + argc, std::string("--show-content")) != argv + argc) {
       std::cout << "File content:\n" << reader.getContent() << std::endl;
     }
     source = reader.getContent();
@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  if (std::find(argv, argv + argc, std::string("--show_tokens")) != argv + argc) {
+  if (std::find(argv, argv + argc, std::string("--show-tokens")) != argv + argc) {
     Lexer temp(source);
     Token token;
     while ((token = temp.nextToken()).type != TokenType::EndOfFile) {

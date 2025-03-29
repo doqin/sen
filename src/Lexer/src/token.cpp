@@ -18,6 +18,7 @@ void printTokenType(TokenType type) {
       case TokenType::Else:       std::cout << "(Else)";        break;
       case TokenType::While:      std::cout << "(While)";       break;
       case TokenType::For:        std::cout << "(For)";         break;
+      case TokenType::Function:   std::cout << "(Function)";    break;
       case TokenType::EndOfFile:  std::cout << "(EndOfFile)";   break;
       case TokenType::Unknown:    std::cout << "(Unknown)";     break;
       case TokenType::Error:      std::cout << "(Error)";       break;

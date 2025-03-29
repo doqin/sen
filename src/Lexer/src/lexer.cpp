@@ -162,9 +162,10 @@ Token Lexer::nextToken() {
     }
 
     // Recognize other keywords
-    if (identifier == "nếu")  return { TokenType::If,   identifier };
-    if (identifier == "cho")  return { TokenType::For,  identifier };
-    if (identifier == "biến") return { TokenType::Var,  identifier };
+    if (identifier == "nếu")  return { TokenType::If,       identifier };
+    if (identifier == "cho")  return { TokenType::For,      identifier };
+    if (identifier == "biến") return { TokenType::Var,      identifier };
+    if (identifier == "hàm")  return { TokenType::Function, identifier };
     return {TokenType::Identifier, identifier };
   }
 

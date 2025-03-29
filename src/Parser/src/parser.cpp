@@ -1,3 +1,5 @@
+#include "AST.hpp"
+#include "token.hpp"
 #include <memory>
 #include <parser.hpp>
 #include <stdexcept>
@@ -5,6 +7,10 @@
 
 void Parser::advance() {
   current = lexer.nextToken();
+}
+
+bool Parser::check(TokenType type) const {
+  return current.type == type;
 }
 
 bool Parser::match(TokenType type) {
@@ -16,16 +22,20 @@ bool Parser::match(TokenType type) {
 }
 
 std::unique_ptr<Expr> Parser::parsePrimary() {
-  if (match(TokenType::Number) || match(TokenType::String)) {
+  if (check(TokenType::Number) || check(TokenType::String)) {
     auto expr = std::make_unique<LiteralExpr>(current.value);
-    // Remove the advance() call here
+    advance();
     return expr;
   }
 
-  if (match(TokenType::Identifier)) {
-    auto identifier = std::make_unique<VarExpr>(current.value);
-    // Remove the advance() call here
-    return parseCall(std::move(identifier)); // Check if it's a function call
+  if (check(TokenType::Identifier)) {
+    std::string identifier = current.value;
+    advance();
+
+    auto expr = std::make_unique<VarExpr>(identifier);
+
+    // If the next token is '(', parse function call
+    return parseCall(std::move(expr));
   }
 
   if (match(TokenType::OpenParen)) {
@@ -40,7 +50,7 @@ std::unique_ptr<Expr> Parser::parsePrimary() {
 }
 
 std::unique_ptr<Expr> Parser::parseUnary() {
-  if (match(TokenType::Operator) &&
+  if (check(TokenType::Operator) &&
       (current.value == "-" || current.value == "!" || current.value == "~")) {
     std::string op = current.value;
     advance();
@@ -52,7 +62,7 @@ std::unique_ptr<Expr> Parser::parseUnary() {
 
 std::unique_ptr<Expr> Parser::parseBinary(int precedence,
                                           std::unique_ptr<Expr> left) {
-  while (current.type == TokenType::Operator) {
+  while (check(TokenType::Operator)) {
     std::string op = current.value;
     int opPrecedence = getPrecedence(op);
 
@@ -75,7 +85,7 @@ std::unique_ptr<Expr> Parser::parseCall(std::unique_ptr<Expr> callee) {
     return callee;
 
   std::vector<std::unique_ptr<Expr>> arguments;
-  if (!match(TokenType::CloseParen)) { // Handle empty argument list
+  if (!check(TokenType::CloseParen)) { // Handle empty argument list
     do {
       arguments.push_back(parseExpression());
     } while (match(TokenType::Comma));
@@ -91,8 +101,8 @@ std::unique_ptr<Expr> Parser::parseCall(std::unique_ptr<Expr> callee) {
 std::unique_ptr<Stmt> Parser::parseBlockStatement() {
   std::vector<std::unique_ptr<Stmt>> statements;
 
-  while (current.type != TokenType::CloseBrace &&
-         current.type != TokenType::EndOfFile) {
+  while (!check(TokenType::CloseBrace) &&
+         !check(TokenType::EndOfFile)) {
     statements.push_back(parseStatement());
   }
 
@@ -169,14 +179,15 @@ std::unique_ptr<Stmt> Parser::parseForStatement() {
 }
 
 std::unique_ptr<Stmt> Parser::parseVarDeclStatement() {
-  if (!match(TokenType::Identifier)) {
+  if (!check(TokenType::Identifier)) {
     throw std::runtime_error("Expected variable name after 'biến'");
   }
   std::string name = current.value;
+  advance();
 
   std::unique_ptr<Expr> initializer = nullptr;
   // Check if current token is an operator and specifically "="
-  if (current.type == TokenType::Operator && current.value == "=") {
+  if (check(TokenType::Operator) && current.value == "=") {
     advance(); // Now advance past the "=" operator
     initializer = parseExpression();
   }
@@ -188,12 +199,53 @@ std::unique_ptr<Stmt> Parser::parseVarDeclStatement() {
   return std::make_unique<VarDeclStmt>(name, std::move(initializer));
 }
 
+std::unique_ptr<Stmt> Parser::parseFunction() {
+  if (!check(TokenType::Identifier)) {
+    throw std::runtime_error("Expected function name");
+  }
+
+  std::string name = current.value;
+  advance();
+
+  if (!match(TokenType::OpenParen)) {
+    throw std::runtime_error("Expected '(' after function name");
+  }
+
+  std::vector<std::string> parameters;
+  if (!check(TokenType::CloseParen)) { // Handle parameters
+    do {
+      if (!check(TokenType::Identifier)) {
+        throw std::runtime_error("Expected parameter name");
+      }
+      parameters.push_back(current.value);
+      advance();
+    } while (match(TokenType::Comma));
+
+    if (!match(TokenType::CloseParen)) {
+      throw std::runtime_error("Expected ')' after parameters");
+    }
+  }
+
+  if (!match(TokenType::OpenBrace)) {
+    throw std::runtime_error("Expected '{' before function body");
+  }
+
+  std::unique_ptr<Stmt> bodyStmt = parseBlockStatement();
+  std::unique_ptr<BlockStmt> body(dynamic_cast<BlockStmt*>(bodyStmt.release()));
+
+  if (!body) {
+    throw std::runtime_error("Expected a block statement for function body");
+  }
+  return std::make_unique<FunctionStmt>(name, std::move(parameters), std::move(body));
+}
+
 std::unique_ptr<Stmt> Parser::parseStatement() {
   if (match(TokenType::If)) return parseIfStatement();
   if (match(TokenType::While)) return parseWhileStatement();
   if (match(TokenType::For)) return parseForStatement();
   if (match(TokenType::OpenBrace)) return parseBlockStatement();
   if (match(TokenType::Var)) return parseVarDeclStatement();
+  if (match(TokenType::Function)) return parseFunction();
 
   auto expr = parseExpression();
   if (!match(TokenType::Semicolon)) {

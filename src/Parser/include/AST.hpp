@@ -143,5 +143,16 @@ struct BlockStmt : public Stmt {
   */
 };
 
+struct FunctionStmt : Stmt {
+  std::string name;
+  std::vector<std::string> parameters;
+  std::unique_ptr<BlockStmt> body;
+
+  FunctionStmt(std::string name, std::vector<std::string> params,
+               std::unique_ptr<BlockStmt> body)
+      : name(std::move(name)), parameters(std::move(params)),
+        body(std::move(body)) {}
+};
+
 // Print function (for debugging AST)
 void printAST(const std::unique_ptr<Stmt> &stmt, int indent = 0);
