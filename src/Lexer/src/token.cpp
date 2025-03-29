@@ -14,6 +14,7 @@ void printTokenType(TokenType type) {
       case TokenType::CloseBrace: std::cout << "(CloseBrace)";  break;
       case TokenType::Comma:      std::cout << "(Comma)";       break;
       case TokenType::Semicolon:  std::cout << "(Semicolon)";   break;
+      case TokenType::Colon:      std::cout << "(Colon)";       break;
       case TokenType::If:         std::cout << "(If)";          break;
       case TokenType::Else:       std::cout << "(Else)";        break;
       case TokenType::While:      std::cout << "(While)";       break;

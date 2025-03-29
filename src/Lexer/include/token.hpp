@@ -9,7 +9,7 @@ enum class TokenType {
   Operator,
   OpenParen, CloseParen,
   OpenBrace, CloseBrace,
-  Comma, Semicolon,
+  Comma, Semicolon, Colon,
   If, Else, While, For,
   Function,
   EndOfFile,

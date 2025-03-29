@@ -205,6 +205,8 @@ Token Lexer::nextToken() {
     return { TokenType::Comma, ","};
   case ';':
     return { TokenType::Semicolon, ";"};
+  case ':':
+    return { TokenType::Colon, ":"};
   case '\0':
     return {TokenType::EndOfFile, ""};
   default:

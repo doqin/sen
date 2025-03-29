@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -89,10 +90,13 @@ struct ExprStmt : public Stmt {
 // Variable declaration statement (e.g., `x = 10;`)
 struct VarDeclStmt : public Stmt {
   std::string name;
+  std::optional<std::string> typeAnnotation;
   std::unique_ptr<Expr> initializer;
 
-  VarDeclStmt(std::string name, std::unique_ptr<Expr> initializer)
-      : name(std::move(name)), initializer(std::move(initializer)) {}
+  VarDeclStmt(std::string name, std::optional<std::string> typeAnnotation,
+              std::unique_ptr<Expr> initializer)
+      : name(std::move(name)), typeAnnotation(std::move(typeAnnotation)),
+        initializer(std::move(initializer)) {}
 };
 
 // If statement (e.g., `nếu (a < b) {} khác`)
@@ -145,13 +149,16 @@ struct BlockStmt : public Stmt {
 
 struct FunctionStmt : Stmt {
   std::string name;
-  std::vector<std::string> parameters;
+  std::vector<std::pair<std::string, std::string>> parameters;
+  std::string returnType;
   std::unique_ptr<BlockStmt> body;
 
-  FunctionStmt(std::string name, std::vector<std::string> params,
+  FunctionStmt(std::string name,
+               std::vector<std::pair<std::string, std::string>> params,
+               std::string returnType,
                std::unique_ptr<BlockStmt> body)
       : name(std::move(name)), parameters(std::move(params)),
-        body(std::move(body)) {}
+        returnType(std::move(returnType)), body(std::move(body)) {}
 };
 
 // Print function (for debugging AST)

@@ -3,6 +3,7 @@
 #include <memory>
 #include <parser.hpp>
 #include <stdexcept>
+#include <optional>
 #include <string>
 
 void Parser::advance() {
@@ -185,6 +186,15 @@ std::unique_ptr<Stmt> Parser::parseVarDeclStatement() {
   std::string name = current.value;
   advance();
 
+  std::optional<std::string> typeAnnotation;
+  if (match(TokenType::Colon)) { // Check for optional type annotation
+    if (!check(TokenType::Identifier)) {
+      throw std::runtime_error("Expected type name after ':'");
+    }
+    typeAnnotation = current.value;
+    advance();
+  }
+
   std::unique_ptr<Expr> initializer = nullptr;
   // Check if current token is an operator and specifically "="
   if (check(TokenType::Operator) && current.value == "=") {
@@ -192,11 +202,15 @@ std::unique_ptr<Stmt> Parser::parseVarDeclStatement() {
     initializer = parseExpression();
   }
 
+  if (!initializer && !typeAnnotation) {
+    throw std::runtime_error("Uninitialized variable must have a type annotation.");
+  }
+
   if (!match(TokenType::Semicolon)) {
     throw std::runtime_error("Expected ';' after variable declaration");
   }
 
-  return std::make_unique<VarDeclStmt>(name, std::move(initializer));
+  return std::make_unique<VarDeclStmt>(name, std::move(typeAnnotation), std::move(initializer));
 }
 
 std::unique_ptr<Stmt> Parser::parseFunction() {
@@ -211,19 +225,41 @@ std::unique_ptr<Stmt> Parser::parseFunction() {
     throw std::runtime_error("Expected '(' after function name");
   }
 
-  std::vector<std::string> parameters;
+  std::vector<std::pair<std::string, std::string>> parameters;
   if (!check(TokenType::CloseParen)) { // Handle parameters
     do {
       if (!check(TokenType::Identifier)) {
         throw std::runtime_error("Expected parameter name");
       }
-      parameters.push_back(current.value);
+      std::string paramName = current.value;
       advance();
+
+      std::string paramType;
+      if (!match(TokenType::Colon)) {
+        throw std::runtime_error("Expected : after parameter name");
+      }
+
+      if (!check(TokenType::Identifier)) {
+        throw std::runtime_error("Expected parameter type");
+      }
+      paramType = current.value; // TODO: Need to check for type
+      advance();
+
+      parameters.emplace_back(paramName, paramType);
     } while (match(TokenType::Comma));
 
     if (!match(TokenType::CloseParen)) {
       throw std::runtime_error("Expected ')' after parameters");
     }
+  }
+
+  std::string returnType = "rỗng"; // Rename it to something else
+  if (match(TokenType::Colon)) {
+    if (!check(TokenType::Identifier)) {
+      throw std::runtime_error("Expected return type after ':'");
+    }
+    returnType = current.value; // TODO: Check for Token type
+    advance();
   }
 
   if (!match(TokenType::OpenBrace)) {
@@ -236,7 +272,7 @@ std::unique_ptr<Stmt> Parser::parseFunction() {
   if (!body) {
     throw std::runtime_error("Expected a block statement for function body");
   }
-  return std::make_unique<FunctionStmt>(name, std::move(parameters), std::move(body));
+  return std::make_unique<FunctionStmt>(name, std::move(parameters), returnType, std::move(body));
 }
 
 std::unique_ptr<Stmt> Parser::parseStatement() {
