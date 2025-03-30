@@ -1,8 +1,10 @@
 #pragma once
+#include "token.hpp"
 #include <memory>
 #include <optional>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 // Base class for all expressions
@@ -40,8 +42,20 @@ struct Stmt {
 
 // Expression for literals (numbers, strings, etc.)
 struct LiteralExpr : public Expr {
-  std::string value;
-  explicit LiteralExpr(const std::string &value) : value(value) {}
+  std::variant<int, double, std::string, bool> value;
+  explicit LiteralExpr(const std::string &tokenValue, TokenType type) {
+    if (type == TokenType::Number) {
+      if (tokenValue.find('.') != std::string::npos) {
+        value = std::stod(tokenValue);
+      } else {
+        value = std::stoi(tokenValue);
+      }
+    } else if (type == TokenType::String) {
+      value = tokenValue;
+    } else if (type == TokenType::Boolean) {
+      value = (tokenValue == "đúng");
+    }
+  }
 };
 
 // Expression for identifiers (variables, function names)
@@ -145,6 +159,13 @@ struct BlockStmt : public Stmt {
     visitor.visitBlockStmt(*this);
   }
   */
+};
+
+// Return Statement (e.g. `trả 8;`)
+struct ReturnStmt : public Stmt {
+  std::unique_ptr<Expr> value;
+
+  explicit ReturnStmt(std::unique_ptr<Expr> value) : value(std::move(value)) {}
 };
 
 struct FunctionStmt : Stmt {

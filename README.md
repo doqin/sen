@@ -2,19 +2,21 @@
 A vietnamese syntax compiled programming language in the making
 
 ```go
-hàm kiểm_tra(a: số, b: số) {
-    nếu (a == b) {
-        in("đúng");
-    } không thì {
-        in("sai");
-    }
+hàm kiểm_tra(a: số nguyên, b: số nguyên): luận lý {
+    nếu (a == b)
+        trả đúng;
+    trả sai;
 }
 
 hàm chính() {
-    biến a: số;
-    a = 2;
-    biến b = 3;
-    kiểm_tra(a, b);
+    biến a: số thực = 8.2;
+    biến b: chuỗi = "xin chào";
+    biến c: luận lý = đúng;
+    biến d: số nguyên = 8;
+    biến e: số nguyên = 6;
+
+    biến kq = kiểm_tra(d, e);
+    in(kq);
 }
 ```
 

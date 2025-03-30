@@ -7,6 +7,7 @@ void printTokenType(TokenType type) {
       case TokenType::Identifier: std::cout << "(Identifier)";  break;
       case TokenType::Number:     std::cout << "(Number)";      break;
       case TokenType::String:     std::cout << "(String)";      break;
+      case TokenType::Boolean:    std::cout << "(Boolean)";     break;
       case TokenType::Operator:   std::cout << "(Operator)";    break;
       case TokenType::OpenParen:  std::cout << "(OpenParen)";   break;
       case TokenType::CloseParen: std::cout << "(CloseParen)";  break;
@@ -20,6 +21,7 @@ void printTokenType(TokenType type) {
       case TokenType::While:      std::cout << "(While)";       break;
       case TokenType::For:        std::cout << "(For)";         break;
       case TokenType::Function:   std::cout << "(Function)";    break;
+      case TokenType::Return:     std::cout << "(Return)";      break;
       case TokenType::EndOfFile:  std::cout << "(EndOfFile)";   break;
       case TokenType::Unknown:    std::cout << "(Unknown)";     break;
       case TokenType::Error:      std::cout << "(Error)";       break;

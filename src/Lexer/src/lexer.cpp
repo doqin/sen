@@ -1,3 +1,4 @@
+#include "token.hpp"
 #include <cctype>
 #include <cstddef>
 #include <lexer.hpp>
@@ -163,13 +164,26 @@ Token Lexer::nextToken() {
       return {TokenType::Var, identifier, line, startColumn};
     if (identifier == "hàm")
       return {TokenType::Function, identifier, line, startColumn};
+    if (identifier == "trả")
+      return {TokenType::Return, identifier, line, startColumn};
+    if (identifier == "đúng")
+      return {TokenType::Boolean, identifier, line, startColumn};
+    if (identifier == "sai")
+      return {TokenType::Boolean, identifier, line, startColumn};
+
     return {TokenType::Identifier, identifier, line, startColumn};
   }
 
   if (std::isdigit(firstChar[0])) {
     std::string number = firstChar;
-    while (std::isdigit(peek()))
+    bool hasDecimal = false;
+
+    while (std::isdigit(peek()) || (peek() == '.' && !hasDecimal)) {
+      if (peek() == '.') {
+        hasDecimal = true;
+      }
       number += advance();
+    }
     return {TokenType::Number, number, line, startColumn};
   }
 

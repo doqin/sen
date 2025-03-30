@@ -6,6 +6,7 @@ enum class TokenType {
   Identifier,
   Number,
   String,
+  Boolean,
   Operator,
   OpenParen,
   CloseParen,
@@ -19,6 +20,7 @@ enum class TokenType {
   While,
   For,
   Function,
+  Return,
   EndOfFile,
   Unknown,
   Error

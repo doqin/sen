@@ -3,6 +3,7 @@
 #include <SymbolTable.hpp>
 #include <lexer.hpp>
 #include <memory>
+#include <optional>
 #include <token.hpp>
 #include <vector>
 
@@ -18,6 +19,7 @@ private:
   Lexer lexer;
   Token current;
   SymbolTable symTable;
+  std::optional<FunctionSymbol> currentFunction; // Track current function
 
   void enforceEntryPoint();
 
@@ -49,9 +51,15 @@ private:
   std::unique_ptr<Stmt> parseVarDeclStatement();
   // Handle for function declaration statements
   std::unique_ptr<Stmt> parseFunction();
+  // Handle for return statements
+  std::unique_ptr<Stmt> parseReturnStatement();
   // Handle statements
   std::unique_ptr<Stmt> parseStatement();
 
+  // Get type
+  std::string inferTypeFromExpression(Expr* expr);
+
+  std::string handleType();
   // Get precedence hehe
   int getPrecedence(const std::string& op);
 public:
