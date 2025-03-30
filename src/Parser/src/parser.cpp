@@ -7,6 +7,24 @@
 #include <sstream>
 #include <iostream>
 
+void Parser::enforceEntryPoint() {
+  if (!symTable.hasFunction("chính")) {
+    throw std::runtime_error("Program must define a 'chính' function as the entry point.");
+  }
+
+  FunctionSymbol* mainFunc = symTable.getFunction("chính");
+
+  // Ensure 'chính' has optional or no parameters
+  if (!mainFunc->parameters.empty()) {
+    throw std::runtime_error("'Chính' function should not take parameters.");
+  }
+
+  // Ensure 'chính' has return type 'rỗng'
+  if (mainFunc->returnType != "rỗng") {
+    throw std::runtime_error("'chính' function must return 'rỗng'.");
+  }
+}
+
 void Parser::advance() { current = lexer.nextToken(); }
 
 bool Parser::check(TokenType type) const { return current.type == type; }
@@ -240,7 +258,7 @@ std::unique_ptr<Stmt> Parser::parseFunction() {
   }
 
   std::vector<std::pair<std::string, std::string>> parameters;
-  if (!check(TokenType::CloseParen)) { // Handle parameters
+  if (!match(TokenType::CloseParen)) { // Handle parameters
     do {
       if (!check(TokenType::Identifier)) {
         throw ParseError(current.line, current.column, "Expected parameter name");
@@ -325,6 +343,7 @@ std::vector<std::unique_ptr<Stmt>> Parser::parseProgram() {
   while (current.type != TokenType::EndOfFile) {
     statements.push_back(parseStatement());
   }
+  enforceEntryPoint();
   return statements;
 }
 

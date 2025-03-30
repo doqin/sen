@@ -1,4 +1,3 @@
-#include "token.hpp"
 #include <FileReader.hpp>
 #include <exception>
 #include <iostream>
@@ -42,7 +41,7 @@ int main(int argc, char *argv[]) {
     std::cerr << "sen::Parsing error: " << std::endl;
     parser.reportError(e);
   } catch (std::exception& e) {
-    std::cerr << "sen::Parsing error: " << e.what() << std::endl;
+    std::cerr << "sen::Parsing error: " << std::endl << e.what() << std::endl;
   }
 
   return 0;

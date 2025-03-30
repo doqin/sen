@@ -19,6 +19,8 @@ private:
   Token current;
   SymbolTable symTable;
 
+  void enforceEntryPoint();
+
   void advance();
   bool check(TokenType type) const;
   bool match(TokenType type);
