@@ -5,6 +5,13 @@
 #include <token.hpp>
 #include <vector>
 
+struct ParseError : public std::runtime_error {
+  int line, column;
+  ParseError(int line, int column, const std::string &message)
+      : std::runtime_error("Line " + std::to_string(line) + ", Column " +
+                           std::to_string(column) + ": " + message),
+        line(line), column(column) {}
+};
 class Parser {
 private:
   Lexer lexer;
@@ -13,6 +20,9 @@ private:
   void advance();
   bool check(TokenType type) const;
   bool match(TokenType type);
+
+  std::string getLineSnippet(int errorLine);
+
   // Handle primary expression like numbers, strings, identifiers
   std::unique_ptr<Expr> parsePrimary();
   // Handle unary expressions
@@ -44,4 +54,6 @@ public:
   explicit Parser(Lexer lexer);
   // Parses the program from the lexer hehe
   std::vector<std::unique_ptr<Stmt>> parseProgram();
+  // Reports the error if catches one
+  void reportError(const ParseError& e);
 };

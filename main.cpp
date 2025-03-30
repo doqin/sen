@@ -38,6 +38,9 @@ int main(int argc, char *argv[]) {
   try {
     auto program = parser.parseProgram();
     std::cout << "sen::Parsing complete!" << std::endl;
+  } catch (ParseError& e) {
+    std::cerr << "sen::Parsing error: " << std::endl;
+    parser.reportError(e);
   } catch (std::exception& e) {
     std::cerr << "sen::Parsing error: " << e.what() << std::endl;
   }

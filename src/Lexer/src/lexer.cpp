@@ -1,18 +1,33 @@
-#include "token.hpp"
 #include <cctype>
 #include <cstddef>
 #include <lexer.hpp>
 
-Lexer::Lexer(const std::string &source) : source(source), pos(0) {}
+Lexer::Lexer(const std::string &source) : source(source), pos(0), line(1), column(0) {}
+
+std::string Lexer::getSource() {
+  return source;
+}
 
 char Lexer::peek() const {
   return (pos < source.length()) ? source[pos] : '\0';
 }
 
-char Lexer::advance() {
-  if (pos < source.length())
-    return source[pos++];
-  return '\0';
+std::string Lexer::advance() {
+  if (pos >= source.length())
+    return "";
+
+  std::string utf8Char = extractUtf8Char(source, pos);
+  if (utf8Char == "\n") {
+    line++;
+    column = 0;
+    // std::cout << std::endl << "Line: " << line << std::endl;
+  }
+  return utf8Char;
+}
+
+void Lexer::skipWhitespace() {
+  while (std::isspace(peek()))
+    advance();
 }
 
 bool Lexer::isAlpha(const std::string &utf8Char) {
@@ -54,20 +69,22 @@ std::string Lexer::extractUtf8Char(const std::string &text, size_t &pos) {
     charSize = text.length() - pos;
 
   std::string utf8Char = text.substr(pos, charSize);
+  column++;
   pos += charSize; // Move position forward
   return utf8Char;
 }
 
 Token Lexer::nextToken() {
-  while (std::isspace(peek()))
-    advance();
+  skipWhitespace();
 
   if (pos >= source.length())
-    return {TokenType::EndOfFile, ""};
+    return {TokenType::EndOfFile, "", line, column};
 
   size_t startPos = pos;
+  int startColumn = column;
   std::string firstChar = extractUtf8Char(
       source, pos); // Note: pos is passed as reference and updated
+  // std::cout << "Col: " << column << " - '" << firstChar << "'" << std::endl;
 
   // Check if the first character is a quote
   if (firstChar[0] == '"') {
@@ -78,9 +95,9 @@ Token Lexer::nextToken() {
 
     if (peek() == '"') {
       advance(); // Consume the closing quote
-      return {TokenType::String, "\"" + str + "\""};
+      return {TokenType::String, "\"" + str + "\"", line, startColumn};
     } else {
-      return {TokenType::Error, "Unterminated string"};
+      return {TokenType::Error, "Unterminated string", line, startColumn};
     }
   }
 
@@ -95,16 +112,18 @@ Token Lexer::nextToken() {
         identifier += nextChar;
         pos = tempPos; // Update pos only if we used the character
       } else {
+        column--;
         break;
       }
     }
 
-    // Check for multi-word keywords like "trong khi"
-    if (identifier == "trong") {
+    // Check for multi-word keywords like "trong khi" or "không thì"
+    if (identifier == "trong" || identifier == "không") {
       size_t tempPos = pos;
 
       // Skip whitespace after "trong"
-      while (std::isspace(peek())) advance();
+      while (std::isspace(peek()))
+        advance();
 
       std::string nextWord;
       if (isAlpha(std::string(1, peek()))) {
@@ -114,66 +133,44 @@ Token Lexer::nextToken() {
         while (pos < source.length()) {
           size_t temp2Pos = pos;
           std::string nextChar = extractUtf8Char(source, temp2Pos);
-          if (isAlpha(nextChar) || (nextChar.size() == 1 && isDigit(nextChar[0]))) {
+          if (isAlpha(nextChar) ||
+              (nextChar.size() == 1 && isDigit(nextChar[0]))) {
             nextWord += nextChar;
             pos = temp2Pos; // Update pos only if we used the character
           } else {
+            column--;
             break;
           }
         }
       }
 
-      if (nextWord == "khi") {
-        return { TokenType::While, "trong khi"};
-      } 
-      
-      pos = tempPos;
-    }
-
-    // Check for multi-word keywords like "không thì"
-    if (identifier == "không") {
-      size_t tempPos = pos;
-
-      // Skip whitespace after "trong"
-      while (std::isspace(peek())) advance();
-
-      std::string nextWord;
-      if (isAlpha(std::string(1, peek()))) {
-        nextWord = extractUtf8Char(source, pos);
-
-        // Extract remaining characters for the second word
-        while (pos < source.length()) {
-          size_t temp2Pos = pos;
-          std::string nextChar = extractUtf8Char(source, temp2Pos);
-          if (isAlpha(nextChar) || (nextChar.size() == 1 && isDigit(nextChar[0]))) {
-            nextWord += nextChar;
-            pos = temp2Pos; // Update pos only if we used the character
-          } else {
-            break;
-          }
-        }
+      if (identifier == "trong" && nextWord == "khi") {
+        return {TokenType::While, "trong khi", line, startColumn};
+      }
+      if (identifier == "không" && nextWord == "thì") {
+        return {TokenType::Else, "không thì", line, startColumn};
       }
 
-      if (nextWord == "thì") {
-        return { TokenType::Else, "không thì"};
-      } 
-      
       pos = tempPos;
     }
 
     // Recognize other keywords
-    if (identifier == "nếu")  return { TokenType::If,       identifier };
-    if (identifier == "cho")  return { TokenType::For,      identifier };
-    if (identifier == "biến") return { TokenType::Var,      identifier };
-    if (identifier == "hàm")  return { TokenType::Function, identifier };
-    return {TokenType::Identifier, identifier };
+    if (identifier == "nếu")
+      return {TokenType::If, identifier, line, startColumn};
+    if (identifier == "cho")
+      return {TokenType::For, identifier, line, startColumn};
+    if (identifier == "biến")
+      return {TokenType::Var, identifier, line, startColumn};
+    if (identifier == "hàm")
+      return {TokenType::Function, identifier, line, startColumn};
+    return {TokenType::Identifier, identifier, line, startColumn};
   }
 
   if (std::isdigit(firstChar[0])) {
     std::string number = firstChar;
     while (std::isdigit(peek()))
       number += advance();
-    return {TokenType::Number, number};
+    return {TokenType::Number, number, line, startColumn};
   }
 
   std::string twoCharOps[] = {"==", "!=", ">=", "<=", "&&", "||"};
@@ -181,35 +178,38 @@ Token Lexer::nextToken() {
     if (firstChar[0] == op[0] && pos < source.length() &&
         source[pos] == op[1]) {
       advance(); // Consume second character of the operator
-      return {TokenType::Operator, op};
+      return {TokenType::Operator, op, line, startColumn};
     }
   }
 
   std::string operators = "+-*/%<>=!&|";
   if (operators.find(firstChar[0]) != std::string::npos) {
-    return {TokenType::Operator, firstChar};
+    return {TokenType::Operator, firstChar, line, startColumn};
   }
 
   switch (firstChar[0]) {
   case '(':
-    return {TokenType::OpenParen, "("};
+    return {TokenType::OpenParen, "(", line, startColumn};
   case ')':
-    return {TokenType::CloseParen, ")"};
+    return {TokenType::CloseParen, ")", line, startColumn};
   case '{':
-    return {TokenType::OpenBrace, "{"};
+    return {TokenType::OpenBrace, "{", line, startColumn};
   case '}':
-    return {TokenType::CloseBrace, "}"};
+    return {TokenType::CloseBrace, "}", line, startColumn};
+  /*
   case '"':
-    return {TokenType::String, "\""}; // Not sure if this is necessary
+    return {TokenType::String, "\"", line,
+            startColumn}; // Not sure if this is necessary
+  */
   case ',':
-    return { TokenType::Comma, ","};
+    return {TokenType::Comma, ",", line, startColumn};
   case ';':
-    return { TokenType::Semicolon, ";"};
+    return {TokenType::Semicolon, ";", line, startColumn};
   case ':':
-    return { TokenType::Colon, ":"};
+    return {TokenType::Colon, ":", line, startColumn};
   case '\0':
-    return {TokenType::EndOfFile, ""};
+    return {TokenType::EndOfFile, "", line, startColumn};
   default:
-    return {TokenType::Unknown, firstChar};
+    return {TokenType::Unknown, firstChar, line, startColumn};
   }
 }
