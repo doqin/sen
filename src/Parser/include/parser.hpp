@@ -1,5 +1,6 @@
 #pragma once
 #include <AST.hpp>
+#include <SymbolTable.hpp>
 #include <lexer.hpp>
 #include <memory>
 #include <token.hpp>
@@ -16,6 +17,7 @@ class Parser {
 private:
   Lexer lexer;
   Token current;
+  SymbolTable symTable;
 
   void advance();
   bool check(TokenType type) const;

@@ -1,8 +1,8 @@
-#include "AST.hpp"
-#include "token.hpp"
+#include "SymbolTable.hpp"
 #include <memory>
 #include <optional>
 #include <parser.hpp>
+#include <stdexcept>
 #include <string>
 #include <sstream>
 #include <iostream>
@@ -276,6 +276,13 @@ std::unique_ptr<Stmt> Parser::parseFunction() {
     advance();
   }
 
+  FunctionSymbol funcSymbol{name, std::move(parameters), returnType};
+  if (!symTable.addFunction(funcSymbol)) {
+    std::stringstream errorMsg;
+    errorMsg << "Line " << current.line << ", Column " << current.column << ": Function '" << name << "' is already defined." << std::endl;
+    throw std::runtime_error(errorMsg.str());
+  }
+
   if (!match(TokenType::OpenBrace)) {
     throw ParseError(current.line, current.column, "Expected '{' before function body");
   }
@@ -287,6 +294,7 @@ std::unique_ptr<Stmt> Parser::parseFunction() {
   if (!body) {
     throw ParseError(current.line, current.column, "Expected a block statement for function body");
   }
+
   return std::make_unique<FunctionStmt>(name, std::move(parameters), returnType,
                                         std::move(body));
 }

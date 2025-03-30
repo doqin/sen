@@ -1,6 +1,7 @@
 add_library(Parser STATIC 
     src/AST.cpp
     src/parser.cpp
+    src/SymbolTable.cpp
 )
 
 target_include_directories(Parser PUBLIC 
