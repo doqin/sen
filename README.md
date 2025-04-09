@@ -21,7 +21,4 @@ hàm chính() {
 ```
 
 ## Current state
-Work in progress
-- [x] Lexer
-- [x] Parser
-- [ ] Semantic Analysis
+Rewriting code to Haskell
