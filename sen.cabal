@@ -71,7 +71,8 @@ executable sen
     build-depends:    
         base ^>=4.17.2.1,
         megaparsec,
-        text
+        text,
+        parser-combinators
 
     -- Directories containing source files.
     hs-source-dirs:   
