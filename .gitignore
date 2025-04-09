@@ -2,3 +2,13 @@ build/
 *.sen
 .cache/
 .vscode/
+dist/
+*.hi
+*.o
+*.exe
+*.out
+*.a
+*.so
+*.dyn_o
+*.dyn_hi
+dist-newstyle/

@@ -1,7 +1,7 @@
 # Sen programming language
 A vietnamese syntax compiled programming language in the making
 
-```go
+```
 hàm kiểm_tra(a: số nguyên, b: số nguyên): luận lý {
     nếu (a == b)
         trả đúng;
@@ -21,7 +21,4 @@ hàm chính() {
 ```
 
 ## Current state
-Work in progress
-- [x] Lexer
-- [x] Parser
-- [ ] Semantic Analysis
+Rewriting code to Haskell
